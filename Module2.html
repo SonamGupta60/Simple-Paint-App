@@ -1,0 +1,156 @@
+<!-- 
+    1. crosshire se kya hota hai or diffrent diffrent value of cursor.
+    2. meaning of absolute in position.
+    3. 
+ -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Paint App</title>
+    <style>
+        canvas {
+            border: 2px solid black;
+            cursor: crosshair;
+        }
+        #container {
+            text-align: center;
+        }
+        #reset-button {
+            position: absolute;
+            bottom: 120px;
+            right: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>Simple Paint App</h1>
+        <canvas id="canvas" width="800" height="400"></canvas>
+        <button id="reset-button">Reset</button>
+    </div>
+
+    <script> 
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+            let circles = [];
+            let lastHitText = null;
+
+            canvas.addEventListener('mousedown', (event) => {
+                const x = event.offsetX;
+                const y = event.offsetY;
+
+                const clickedCircleIndex = circles.findIndex(circle => isPointInsideCircle(x, y, circle));
+                if (clickedCircleIndex !== -1) {
+                    if (lastHitText) {
+                        lastHitText.remove();
+                    }
+                    const hitText = document.createElement('div');
+                    hitText.textContent = 'Hit';
+                    hitText.style.position = 'absolute';
+                    hitText.style.top = y + 'px';
+                    hitText.style.left = x + 'px';
+                    hitText.style.color = 'green';
+                    document.getElementById('container').appendChild(hitText);
+
+                    lastHitText = hitText;
+
+                    setTimeout(() => {
+                        hitText.remove();
+                    }, 1000);
+
+                    return;
+                }
+                else {
+              
+                    const missText = document.createElement('div');
+                    missText.textContent = 'Miss';
+                    missText.style.position = 'absolute';
+                    missText.style.top = y + 'px';
+                    missText.style.left = x + 'px';
+                    missText.style.color = 'red';
+                    document.getElementById('container').appendChild(missText);
+
+                    setTimeout(() => {
+                        missText.remove();
+                    }, 1000);
+                }
+               
+                const isInsideCircle = clickedCircleIndex !== -1;
+                circles.push({ x, y, radius: 0, color: getRandomColor() });
+
+                const mousemoveHandler = (event) => {
+                    const newX = event.offsetX;
+                    const newY = event.offsetY;
+                    const radius = Math.sqrt(Math.pow(newX - x, 2) + Math.pow(newY - y, 2)); // Corrected calculation
+                    circles[circles.length - 1].radius = radius;
+                    redraw();
+                };
+        
+
+                const mouseupHandler = () => {
+                    canvas.removeEventListener('mousemove', mousemoveHandler);
+                    canvas.removeEventListener('mouseup', mouseupHandler);
+
+                    const hitMissText = document.createElement('div');
+                    hitMissText.textContent = isInsideCircle ? 'Hit' : 'Miss';
+                    hitMissText.style.position = 'absolute';
+                    hitMissText.style.top = y + 'px';
+                    hitMissText.style.left = x + 'px';
+                    hitMissText.style.color = isInsideCircle ? 'green' : 'red';
+                    document.getElementById('container').appendChild(hitMissText);
+
+                    setTimeout(() => {
+                        hitMissText.remove();
+                    }, 1000);
+                };
+
+                canvas.addEventListener('mousemove', mousemoveHandler);
+                canvas.addEventListener('mouseup', mouseupHandler);
+            });
+
+            canvas.addEventListener('dblclick', (event) => {
+                const x = event.offsetX;
+                const y = event.offsetY;
+                const clickedCircleIndex = circles.findIndex(circle => isPointInsideCircle(x, y, circle));
+                if (clickedCircleIndex !== -1) {
+                    circles.splice(clickedCircleIndex, 1);
+                    redraw();
+                }
+            });
+
+            document.getElementById('reset-button').addEventListener('click', () => {
+                circles = [];
+                redraw();
+            });
+
+            function redraw() {
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                circles.forEach(circle => {
+                    context.beginPath();
+                    context.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
+                    context.fillStyle = circle.color;
+                    context.fill();
+                });
+            }
+
+            function getRandomColor() {
+                const letters = '0123456789ABCDEF';
+                let color = '#';
+                for (let i = 0; i < 6; i++) {
+                    color += letters[Math.floor(Math.random() * 16)];
+                }
+                return color;
+            }
+
+            function isPointInsideCircle(x, y, circle) {
+                const dx = x - circle.x;
+                const dy = y - circle.y;
+                return dx * dx + dy * dy <= circle.radius * circle.radius;
+            }
+        });
+    </script>
+</body>
+</html>
